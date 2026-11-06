@@ -1,0 +1,23 @@
+tx-wallet-tracker/
+├── app/
+│   ├── index.tsx
+│   ├── login.tsx
+│   ├── dashboard.tsx
+│   ├── wallets.tsx
+│   ├── transactions.tsx
+│   ├── analytics.tsx
+│   ├── scanner.tsx
+│   └── browser.tsx
+├── components/
+├── services/
+│   ├── blockchain/
+│   ├── wallet/
+│   ├── notifications/
+│   └── security/
+├── supabase/
+│   └── migrations/
+├── assets/
+├── package.json
+├── app.json
+├── tsconfig.json
+└── README.md
