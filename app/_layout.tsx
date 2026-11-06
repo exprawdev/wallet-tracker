@@ -30,6 +30,13 @@ export default function RootLayout() {
       <Tabs.Screen name="analytics" options={{ title: "Analytics", tabBarIcon: () => <TabIcon label="▤" /> }} />
       <Tabs.Screen name="scanner" options={{ title: "Scanner", tabBarIcon: () => <TabIcon label="⌕" /> }} />
       <Tabs.Screen name="browser" options={{ title: "Browser", tabBarIcon: () => <TabIcon label="🌐" /> }} />
-    </Tabs>
+      <Tabs.Screen
+  name="network"
+  options={{
+    title: "Network",
+    tabBarIcon: () => <TabIcon label="◎" />
+  }}
+/> 
+  </Tabs>
   );
 }
