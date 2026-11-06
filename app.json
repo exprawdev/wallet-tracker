@@ -1,0 +1,30 @@
+
+{
+  "expo": {
+    "name": "TX Wallet Tracker",
+    "slug": "tx-wallet-tracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "txwallet",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "android": {
+      "package": "com.txwallet.tracker",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "VIBRATE"
+      ]
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.txwallet.tracker"
+    }
+  }
+}
