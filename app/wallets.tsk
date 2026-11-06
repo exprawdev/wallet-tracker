@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Wallet = {
   id: string;
@@ -16,6 +17,8 @@ type Wallet = {
   address: string;
   network: string;
 };
+
+const STORAGE_KEY = "tx_tracker_wallets";
 
 const networks = [
   "Ethereum",
@@ -34,37 +37,78 @@ export default function WalletsScreen() {
   const [address, setAddress] = useState("");
   const [network, setNetwork] = useState("Ethereum");
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
-  function addWallet() {
-    if (!name.trim() || !address.trim()) {
+  useEffect(() => {
+    async function loadWallets() {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) setWallets(parsed);
+        }
+      } catch {
+        Alert.alert("Error", "Gagal membaca data wallet.");
+      } finally {
+        setLoaded(true);
+      }
+    }
+
+    loadWallets();
+  }, []);
+
+  async function saveWallets(updated: Wallet[]) {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      setWallets(updated);
+    } catch {
+      Alert.alert("Error", "Gagal menyimpan wallet.");
+    }
+  }
+
+  async function addWallet() {
+    const cleanName = name.trim();
+    const cleanAddress = address.trim();
+
+    if (!cleanName || !cleanAddress) {
       Alert.alert("Data belum lengkap", "Masukkan nama dan alamat wallet.");
       return;
     }
 
+    const duplicate = wallets.some(
+      (wallet) =>
+        wallet.address.toLowerCase() === cleanAddress.toLowerCase() &&
+        wallet.network === network
+    );
+
+    if (duplicate) {
+      Alert.alert("Wallet sudah ada", "Alamat ini sudah terdaftar pada jaringan tersebut.");
+      return;
+    }
+
     const newWallet: Wallet = {
-      id: Date.now().toString(),
-      name: name.trim(),
-      address: address.trim(),
+      id: `${Date.now()}-${Math.random()}`,
+      name: cleanName,
+      address: cleanAddress,
       network,
     };
 
-    setWallets((previous) => [...previous, newWallet]);
+    await saveWallets([...wallets, newWallet]);
     setName("");
     setAddress("");
-    Alert.alert("Berhasil", "Wallet ditambahkan ke daftar.");
+    Alert.alert("Berhasil", "Wallet berhasil disimpan di perangkat.");
   }
 
-  function removeWallet(id: string) {
-    setWallets((previous) =>
-      previous.filter((wallet) => wallet.id !== id)
-    );
+  async function removeWallet(id: string) {
+    const updated = wallets.filter((wallet) => wallet.id !== id);
+    await saveWallets(updated);
   }
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>WALLET MANAGER</Text>
       <Text style={styles.subtitle}>
-        Tambahkan alamat wallet yang ingin dipantau
+        Simpan dan kelola alamat wallet yang ingin dipantau
       </Text>
 
       <View style={styles.form}>
@@ -77,10 +121,10 @@ export default function WalletsScreen() {
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>ALAMAT WALLET</Text>
+        <Text style={styles.label}>PUBLIC WALLET ADDRESS</Text>
         <TextInput
           style={styles.input}
-          placeholder="Masukkan public wallet address"
+          placeholder="Masukkan alamat wallet publik"
           placeholderTextColor="#75849C"
           value={address}
           onChangeText={setAddress}
@@ -121,11 +165,13 @@ export default function WalletsScreen() {
         <Text style={styles.count}>{wallets.length} WALLETS</Text>
       </View>
 
-      {wallets.length === 0 ? (
+      {!loaded ? (
+        <Text style={styles.muted}>Memuat wallet...</Text>
+      ) : wallets.length === 0 ? (
         <View style={styles.empty}>
           <Text style={styles.emptyText}>Belum ada wallet</Text>
           <Text style={styles.muted}>
-            Tambahkan alamat wallet untuk memulai.
+            Tambahkan alamat wallet publik untuk memulai.
           </Text>
         </View>
       ) : (
@@ -138,7 +184,16 @@ export default function WalletsScreen() {
             </Text>
             <TouchableOpacity
               style={styles.removeButton}
-              onPress={() => removeWallet(wallet.id)}
+              onPress={() =>
+                Alert.alert("Hapus wallet?", wallet.name, [
+                  { text: "Batal", style: "cancel" },
+                  {
+                    text: "Hapus",
+                    style: "destructive",
+                    onPress: () => removeWallet(wallet.id),
+                  },
+                ])
+              }
             >
               <Text style={styles.removeText}>REMOVE WALLET</Text>
             </TouchableOpacity>
@@ -147,152 +202,39 @@ export default function WalletsScreen() {
       )}
 
       <Text style={styles.notice}>
-        Catatan: fitur ini menyimpan data sementara selama aplikasi berjalan.
-        Penyimpanan permanen dan pemantauan blockchain akan ditambahkan
-        pada tahap integrasi berikutnya.
+        Wallet disimpan secara lokal di perangkat. Fitur ini hanya
+        membutuhkan alamat publik. Jangan pernah memasukkan seed phrase
+        atau private key.
       </Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#080D18",
-    padding: 20,
-  },
-  title: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "900",
-    marginTop: 45,
-  },
-  subtitle: {
-    color: "#8B9BB4",
-    fontSize: 12,
-    marginTop: 8,
-    marginBottom: 25,
-  },
-  form: {
-    backgroundColor: "#111B2D",
-    padding: 18,
-    borderRadius: 16,
-  },
-  label: {
-    color: "#8B9BB4",
-    fontSize: 10,
-    fontWeight: "bold",
-    marginBottom: 8,
-    marginTop: 12,
-  },
-  input: {
-    backgroundColor: "#080D18",
-    color: "#FFFFFF",
-    padding: 14,
-    borderRadius: 9,
-    fontSize: 13,
-  },
-  networkList: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  networkButton: {
-    backgroundColor: "#202D43",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  selectedNetwork: {
-    backgroundColor: "#145D4B",
-  },
-  networkText: {
-    color: "#AAB8CE",
-    fontSize: 11,
-  },
-  selectedText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  addButton: {
-    backgroundColor: "#16C784",
-    padding: 15,
-    borderRadius: 10,
-    marginTop: 22,
-    alignItems: "center",
-  },
-  addText: {
-    color: "#07140F",
-    fontWeight: "900",
-    fontSize: 13,
-  },
-  listHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 28,
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 13,
-  },
-  count: {
-    color: "#16C784",
-    fontSize: 11,
-  },
-  empty: {
-    backgroundColor: "#111B2D",
-    padding: 25,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  emptyText: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  muted: {
-    color: "#75849C",
-    fontSize: 11,
-    marginTop: 7,
-  },
-  walletCard: {
-    backgroundColor: "#111B2D",
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
-  },
-  walletName: {
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    fontSize: 15,
-  },
-  networkName: {
-    color: "#16C784",
-    fontSize: 11,
-    marginTop: 6,
-  },
-  address: {
-    color: "#AAB8CE",
-    fontSize: 11,
-    marginTop: 12,
-  },
-  removeButton: {
-    alignSelf: "flex-start",
-    backgroundColor: "#38202A",
-    padding: 9,
-    borderRadius: 7,
-    marginTop: 15,
-  },
-  removeText: {
-    color: "#EA3943",
-    fontSize: 10,
-    fontWeight: "bold",
-  },
-  notice: {
-    color: "#75849C",
-    fontSize: 10,
-    lineHeight: 17,
-    marginVertical: 25,
-  },
+  container: { flex: 1, backgroundColor: "#080D18", padding: 20 },
+  title: { color: "#FFFFFF", fontSize: 24, fontWeight: "900", marginTop: 45 },
+  subtitle: { color: "#8B9BB4", fontSize: 12, marginTop: 8, marginBottom: 25 },
+  form: { backgroundColor: "#111B2D", padding: 18, borderRadius: 16 },
+  label: { color: "#8B9BB4", fontSize: 10, fontWeight: "bold", marginBottom: 8, marginTop: 12 },
+  input: { backgroundColor: "#080D18", color: "#FFFFFF", padding: 14, borderRadius: 9, fontSize: 13 },
+  networkList: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  networkButton: { backgroundColor: "#202D43", paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
+  selectedNetwork: { backgroundColor: "#145D4B" },
+  networkText: { color: "#AAB8CE", fontSize: 11 },
+  selectedText: { color: "#FFFFFF", fontWeight: "bold" },
+  addButton: { backgroundColor: "#16C784", padding: 15, borderRadius: 10, marginTop: 22, alignItems: "center" },
+  addText: { color: "#07140F", fontWeight: "900", fontSize: 13 },
+  listHeader: { flexDirection: "row", justifyContent: "space-between", marginTop: 28, marginBottom: 15 },
+  sectionTitle: { color: "#FFFFFF", fontWeight: "bold", fontSize: 13 },
+  count: { color: "#16C784", fontSize: 11 },
+  empty: { backgroundColor: "#111B2D", padding: 25, borderRadius: 12, alignItems: "center" },
+  emptyText: { color: "#FFFFFF", fontWeight: "bold" },
+  muted: { color: "#75849C", fontSize: 11, marginTop: 7 },
+  walletCard: { backgroundColor: "#111B2D", padding: 16, borderRadius: 12, marginBottom: 12 },
+  walletName: { color: "#FFFFFF", fontWeight: "bold", fontSize: 15 },
+  networkName: { color: "#16C784", fontSize: 11, marginTop: 6 },
+  address: { color: "#AAB8CE", fontSize: 11, marginTop: 12 },
+  removeButton: { alignSelf: "flex-start", backgroundColor: "#38202A", padding: 9, borderRadius: 7, marginTop: 15 },
+  removeText: { color: "#EA3943", fontSize: 10, fontWeight: "bold" },
+  notice: { color: "#75849C", fontSize: 10, lineHeight: 17, marginVertical: 25 },
 });
