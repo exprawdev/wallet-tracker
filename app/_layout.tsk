@@ -23,48 +23,13 @@ export default function RootLayout() {
         tabBarInactiveTintColor: "#75849C"
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: () => <TabIcon label="⌂" />
-        }}
-      />
-      <Tabs.Screen
-        name="wallets"
-        options={{
-          title: "Wallets",
-          tabBarIcon: () => <TabIcon label="◈" />
-        }}
-      />
-      <Tabs.Screen
-        name="transactions"
-        options={{
-          title: "Activity",
-          tabBarIcon: () => <TabIcon label="⇄" />
-        }}
-      />
-      <Tabs.Screen
-        name="chart"
-        options={{
-          title: "Chart",
-          tabBarIcon: () => <TabIcon label="▥" />
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: "Analytics",
-          tabBarIcon: () => <TabIcon label="▤" />
-        }}
-      />
-      <Tabs.Screen
-        name="scanner"
-        options={{
-          title: "Scanner",
-          tabBarIcon: () => <TabIcon label="⌕" />
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: "Home", tabBarIcon: () => <TabIcon label="⌂" /> }} />
+      <Tabs.Screen name="wallets" options={{ title: "Wallets", tabBarIcon: () => <TabIcon label="◈" /> }} />
+      <Tabs.Screen name="transactions" options={{ title: "Activity", tabBarIcon: () => <TabIcon label="⇄" /> }} />
+      <Tabs.Screen name="chart" options={{ title: "Chart", tabBarIcon: () => <TabIcon label="▥" /> }} />
+      <Tabs.Screen name="analytics" options={{ title: "Analytics", tabBarIcon: () => <TabIcon label="▤" /> }} />
+      <Tabs.Screen name="scanner" options={{ title: "Scanner", tabBarIcon: () => <TabIcon label="⌕" /> }} />
+      <Tabs.Screen name="browser" options={{ title: "Browser", tabBarIcon: () => <TabIcon label="🌐" /> }} />
     </Tabs>
   );
 }
